@@ -14,7 +14,7 @@ Access_Token_Secret = 'tyTVLcojbETSeq0NFfoA8UHPBQdf50WoDYpnEgXU5m2S2'
 
 
 
-def twitter_crawller(count=10):
+def twitter_crawller(count):
     data = []
     try:
         tso = TwitterSearchOrder()
@@ -45,8 +45,12 @@ if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: dumps(x).encode('utf-8'))
     
     for i in range(2):
-        texts = twitter_crawller(count=10):
-        sleep(5)
+        data = twitter_crawller(count=3)
+        print(i)
+        sleep(10)
+        # data = ['this is  a test', 'second test']
         for text in data:
-            sleep(2)
+            sleep(3)
+            print(text['text'])
             producer.send('pre-process', value=text)
+            print("2 -> crawller send to pre-process")

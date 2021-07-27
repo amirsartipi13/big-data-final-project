@@ -21,10 +21,9 @@ if __name__ == '__main__':
 
     consumer = KafkaConsumer('channel-history')
     while consumer:
-        consumer = KafkaConsumer('persistance')
+        consumer = KafkaConsumer('channel-history')
         for msg in consumer:
             data = json.loads(msg.value)
-            save_to_casandra(data)
-            show_to_flask(data)
-            pass_to_spark()
+            print(data['text'])
             producer.send('statistics', value=data)
+            print("4 -> channel-history send to statistics")

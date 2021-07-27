@@ -2,3 +2,4 @@ stanza
 elasticsearch
 requests
 kafka-python
+TwitterSearch

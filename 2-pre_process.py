@@ -7,8 +7,10 @@ import requests
 import os
 import uuid
 
+
 from kafka import KafkaConsumer, KafkaProducer
 from json import loads, dumps
+from time import sleep
 
 stanza.download('fa')
 nlp = stanza.Pipeline('fa')
@@ -30,9 +32,10 @@ static_keywords = ['بورس', 'اقتصاد', 'تحریم', 'دولت',
                  'کویئد 19', 'کویید 19', 'دانشگاه', 'تورم']
 
 
-def pre_process(text):
+def pre_process(tweet):
 
     id = uuid.uuid4()
+    text = tweet['text']
     date = datetime.datetime.now()
     doc = nlp(text)
     hashtags = re.findall(r"#(\w+)", text)
@@ -43,6 +46,8 @@ def pre_process(text):
         "id":id,
         "source":None,
         "text":text,
+        "tweet":tweet,
+        "user": tweet['user']['screen_name'],
         "doc":doc.to_dict(),
         "ctext":None,
         "date_posted":None,
@@ -61,11 +66,16 @@ if __name__ == '__main__':
     # texts = ['سلام چطوری؟', 'خوبم مرسی', 'لطفا به این لینک مراجعه کنید https://stanfordnlp.github.io/stanza/', 'امروزه #اقتصاد بسیار در گیر بوده است.', 'بیماری کویید 19 خطرناک است']    # recive data from kafka
     consumer = KafkaConsumer('pre-process')
     while consumer:
+        sleep(3)
         consumer = KafkaConsumer('pre-process')
         for msg in consumer:
-            text = json.loads(msg.value)
-            jtext = json.dumps(pre_process(text), cls=DefaultEncoder)
+            tweet = json.loads(msg.value)
+            # print(tweet['text'])
+            jtweet = json.dumps(pre_process(tweet), cls=DefaultEncoder)
+            print("______________________________")
+            # print(jtweet)
             # data = {'text' : jtext}
-            producer.send('persistence', value=jtext)
+            producer.send('persistence', value=jtweet)
+            print("2 -> pre-process send to persistence")
     
 
