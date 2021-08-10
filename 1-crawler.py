@@ -4,51 +4,50 @@ from json import dumps
 from kafka import KafkaProducer
 from TwitterSearch import *
 
-API_Key = 'Eo3ej5ML2UbkkJUEcF78lEyOA'
-API_Secret_Key = 'Q1ED20LEAhrgWkldBPP7QCy1LO0As24y5Kp2KlgedJPxTqm0II'
+API_Key = 'LJq2tNmIiojR7gO08cIKxb9tm'
+API_Secret_Key = 'B7v9sswv42wfeXy8lnn88WpmRxxo8E7dNQGFcB8Oc4iQ1jW3qC'
 
+Bearer_Token = 'AAAAAAAAAAAAAAAAAAAAAB1USAEAAAAA6jJusoxQiAxt7hlTQNnYwo%2BUnFI%3DRN9w6xyGw9SPE6nZUwpL5lPpfOacHcmi8vvjPlactQ47v4UpLn'
+Access_Token = '1419011209307639810-1DYnhpI4kNObmJGukki70DSFgYedoE'
+Access_Token_Secret = 'JaAWSFihySWGDuXlgKAAAMwAx1OjXmdLVIAHUrkV5eL74'
 
-Bearer_Token = 'AAAAAAAAAAAAAAAAAAAAAB1USAEAAAAAEfCgv2RY0waIj7mCpnNDmIT70cM%3D99Yx4oDNnX8Ky2oUYeuqvANZRf5YwlQIO5zH7zWD5dRC5Zsdvs'
-Access_Token = '1419011209307639810-nI6S77Lvja1XpRftPNI2YcBjleiJvV'
-Access_Token_Secret = 'tyTVLcojbETSeq0NFfoA8UHPBQdf50WoDYpnEgXU5m2S2'
-
-
+f = open('./files/trends.txt', 'r', encoding="utf8")
+keywords = f.read()
+keywords = keywords.splitlines()
+f.close() 
 
 def twitter_crawller(count):
     data = []
     try:
         tso = TwitterSearchOrder()
-        tso.set_keywords(['ایران'])
+        tso.set_keywords(['ایران' , 'المپیک', 'خاورمیانه' , 'کرونا'])
+        # tso.set_keywords(['ایران'])
         tso.set_language('fa')
         tso.set_include_entities(True)
         tso.set_count(count)
-
         ts = TwitterSearch(
             consumer_key = API_Key,
             consumer_secret = API_Secret_Key,
             access_token = Access_Token,
             access_token_secret = Access_Token_Secret
         )
-
+        index = 0
         for tweet in ts.search_tweets_iterable(tso):
-            # print( '@%s tweeted: %s' % ( tweet['user']['screen_name'], tweet['text'] ) )
+            index += 1
             data.append(tweet)
+            if index==count:
+                break
+
     except TwitterSearchException as e:
         print(e)
-
     return data
 
-
 if __name__ == '__main__':
-    
-    last_time = ''
-    producer = KafkaProducer(bootstrap_servers=['localhost:9092'], value_serializer=lambda x: dumps(x).encode('utf-8'))
-    
+    producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
+                            value_serializer=lambda x: dumps(x).encode('utf-8'))
     for i in range(2):
-        data = twitter_crawller(count=3)
-        print(i)
+        data = twitter_crawller(count=10)
         sleep(10)
-        # data = ['this is  a test', 'second test']
         for text in data:
             sleep(3)
             print(text['text'])
