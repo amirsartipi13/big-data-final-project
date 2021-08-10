@@ -3,3 +3,6 @@ elasticsearch
 requests
 kafka-python
 TwitterSearch
+yake
+hazm
+redis
