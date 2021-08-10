@@ -1,20 +1,11 @@
-import stanza
-import uuid
-import re
-import json
-import datetime
-import requests
-import os
-import uuid
-
-
+import stanza, uuid, re, json, datetime, requests, os, yake
 from kafka import KafkaConsumer, KafkaProducer
 from json import loads, dumps
 from time import sleep
+from hazm import *
 
 stanza.download('fa')
 nlp = stanza.Pipeline('fa')
-
 
 class DefaultEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -24,57 +15,89 @@ class DefaultEncoder(json.JSONEncoder):
             return obj.isoformat()
         return json.JSONEncoder.default(self, obj)
 
-with open('./files/stop_wrods.txt', 'r') as f:
-    stop_wrods = list(set([x.rstrip() for x in f]))
-    
-static_keywords = ['بورس', 'اقتصاد', 'تحریم', 'دولت',
-                 'حسن روحانی', 'دلار', 'طلا', 'کرونا', 'انتخابات', 'کوید19',
-                 'کویئد 19', 'کویید 19', 'دانشگاه', 'تورم']
 
+with open('./files/stop_wrods.txt', 'r', encoding="utf-8") as f:
+    stop_words = list(set([x.rstrip() for x in f]))
+
+special_keywords = ['بورس', 'اقتصاد', 'تحریم', 'دولت',
+                   'حسن روحانی', 'دلار', 'طلا', 'کرونا', 'انتخابات', 'دانشگاه', 'تورم']
+
+covid_keywords = ['کوید19', 'کووید19', 'کوید', 'کووید19']
+
+static_keywords = special_keywords + covid_keywords
+
+def write_json(new_data, filename='./files/data.json'):
+    with open(filename,'r+') as file:
+        file_data = json.load(file)
+        file_data["data"].append(new_data)
+        file.seek(0)
+        json.dump(file_data, file,cls=DefaultEncoder, indent = 4)
+
+def find_keywords(message, kw):
+	kw_extractor = yake.KeywordExtractor()
+	custom_kw_extractor = yake.KeywordExtractor(n=1, features=None, top=10)
+	keywords = custom_kw_extractor.extract_keywords(message)
+	keywords = [x[0] for x in keywords if x[1] > 0.09]  + kw
+	return list(set(keywords))
 
 def pre_process(tweet):
-
     id = uuid.uuid4()
     text = tweet['text']
+    normalizer = Normalizer()
     date = datetime.datetime.now()
-    doc = nlp(text)
-    hashtags = re.findall(r"#(\w+)", text)
-    urls = re.findall("(?P<url>https?://[^\s]+)", text)
-    keywords = list(set([term.text for term in doc.iter_words() if term.text in static_keywords]))
-
+    pdate, ptime, ptimestamp = split_date_time(tweet['created_at'])
+    urls = list(set(re.findall("(?P<url>https?://[^\s]+)", text)))
+    text = re.sub(r'[A-Za-z0-9]+@[a-zA-z].[a-zA-Z]+', '', text)
+    text = text.split(':')
+    text = ":".join(text[-1:])
+    hashtags = list(set(re.findall(r"#(\w+)", text)))
+    text = normalizer.normalize(text)
+    text = word_tokenize(text)
+    text = [word for word in text if word not in stop_words and word.isalpha()]
+    keywords = [word for word in text if word in static_keywords]
+    text = ' '.join(text)
+    keywords = find_keywords(text, keywords)
     return {
-        "id":id,
-        "source":None,
+        "id": id,
         "text":text,
-        "tweet":tweet,
         "user": tweet['user']['screen_name'],
-        "doc":doc.to_dict(),
-        "ctext":None,
-        "date_posted":None,
+        "ctext":text,
+        "pdate":pdate,
+        "ptime":ptime,
+        "ptimestamp": ptimestamp,
         "date":date,
         "hashtags":hashtags,
         "urls":urls,
         "keywords":keywords
     }
 
+
+
+def split_date_time(date):
+    date = date.split(' ')
+    year = date[-1]
+    day = date[2]
+    month = datetime.datetime.strptime(date[1], "%b").month
+    time = date[3]
+    date = str(year) + '-' + str(month) + '-' + str(day)
+    date_time = date + ' ' + time
+    timestamp = datetime.datetime.timestamp(datetime.datetime.strptime(date_time, "%Y-%m-%d %H:%M:%S"))
+    return date, time, timestamp
+
+
 if __name__ == '__main__':
-
-    producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-    #consumer = KafkaConsumer('pre-process',value_deserializer=lambda x: loads(x.decode('utf-8')))
-
-    # data = []
-    # texts = ['سلام چطوری؟', 'خوبم مرسی', 'لطفا به این لینک مراجعه کنید https://stanfordnlp.github.io/stanza/', 'امروزه #اقتصاد بسیار در گیر بوده است.', 'بیماری کویید 19 خطرناک است']    # recive data from kafka
+    producer = KafkaProducer(bootstrap_servers='localhost:9092',
+                            value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     consumer = KafkaConsumer('pre-process')
     while consumer:
         sleep(3)
         consumer = KafkaConsumer('pre-process')
         for msg in consumer:
             tweet = json.loads(msg.value)
-            # print(tweet['text'])
-            jtweet = json.dumps(pre_process(tweet), cls=DefaultEncoder)
+            tweet = pre_process(tweet)
+            write_json(tweet)
+            jtweet = json.dumps(tweet, cls=DefaultEncoder)
             print("______________________________")
-            # print(jtweet)
-            # data = {'text' : jtext}
             producer.send('persistence', value=jtweet)
             print("2 -> pre-process send to persistence")
     
