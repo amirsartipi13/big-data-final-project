@@ -1,10 +1,10 @@
+import json
 from elasticsearch import Elasticsearch, helpers
 from kafka import KafkaConsumer, KafkaProducer
 from json import loads, dumps
 from time import sleep
-import json
 
-with open('./files/stop_wrods.txt', 'r') as f:
+with open('./files/stop_wrods.txt', 'r', encoding='utf-8') as f:
     stop_wrods = list(set([x.rstrip() for x in f]))
 
 body={
@@ -54,16 +54,17 @@ def create_or_get_es(index):
 
 if __name__ == '__main__':
 
-    producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-    #consumer = KafkaConsumer('persistance',value_deserializer=lambda x: loads(x.decode('utf-8')))
-    
+    producer = KafkaProducer(bootstrap_servers='localhost:9092',
+                            value_serializer=lambda v: json.dumps(v).encode('utf-8'))
+
     es = create_or_get_es('data_center')
-    consumer = KafkaConsumer('persistence')
-    sleep(1)
+
     while consumer:
-        consumer = KafkaConsumer('persistence')
-        for msg in consumer:
-            tweet = json.loads(msg.value)
-            # helpers.bulk(es, json.loads(msg.value), index=index, doc_type="_doc")
-            producer.send('channel-history', value=json.loads(json.loads(msg.value)))
-            print("3 -> persistance send to channel-history")
+      consumer = KafkaConsumer('persistence',
+                              auto_offset_reset= 'earliest',
+                              auto_commit_interval_ms = 1000)
+      for msg in consumer:
+          tweet = json.loads(msg.value)
+          es.index('data_center', tweet)
+          producer.send('channel-history', value=json.loads(json.loads(msg.value)))
+          print("3 -> persistance send to channel-history")
