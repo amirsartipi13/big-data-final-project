@@ -3,6 +3,7 @@ from time import sleep
 from json import dumps
 from kafka import KafkaProducer
 from TwitterSearch import *
+import random
 
 API_Key = 'LJq2tNmIiojR7gO08cIKxb9tm'
 API_Secret_Key = 'B7v9sswv42wfeXy8lnn88WpmRxxo8E7dNQGFcB8Oc4iQ1jW3qC'
@@ -20,8 +21,11 @@ def twitter_crawller(count):
     data = []
     try:
         tso = TwitterSearchOrder()
-        tso.set_keywords(['ایران' , 'المپیک', 'خاورمیانه' , 'کرونا'])
-        # tso.set_keywords(['ایران'])
+        index = random.randint(0, len(keywords)-1)	
+        # tso.set_keywords(['ایران' , 'المپیک', 'خاورمیانه' , 'کرونا'])
+        tso.set_keywords([keywords[index]])
+        # tso.set_keywords(keywords)
+        # tso.add_keyword(keywords)
         tso.set_language('fa')
         tso.set_include_entities(True)
         tso.set_count(count)
@@ -47,7 +51,6 @@ if __name__ == '__main__':
                             value_serializer=lambda x: dumps(x).encode('utf-8'))
     for i in range(2):
         data = twitter_crawller(count=10)
-        sleep(10)
         for text in data:
             sleep(3)
             print(text['text'])

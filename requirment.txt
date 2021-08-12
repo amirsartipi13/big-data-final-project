@@ -6,3 +6,7 @@ TwitterSearch
 yake
 hazm
 redis
+Flask==1.1.2
+redis==3.4.1
+rq==1.2.2
+confluent-kafka

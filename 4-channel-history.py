@@ -17,7 +17,7 @@ if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers='localhost:9092', value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
     consumer = KafkaConsumer('channel-history')
-    while consumer:
+    while True:
         consumer = KafkaConsumer('channel-history')
         for msg in consumer:
             data = json.loads(msg.value)

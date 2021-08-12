@@ -4,8 +4,8 @@ from json import loads, dumps
 from time import sleep
 from hazm import *
 
-stanza.download('fa')
-nlp = stanza.Pipeline('fa')
+# stanza.download('fa')
+# nlp = stanza.Pipeline('fa')
 
 class DefaultEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -59,13 +59,14 @@ def pre_process(tweet):
     keywords = find_keywords(text, keywords)
     return {
         "id": id,
-        "text":text,
+        "text":tweet['text'],
         "user": tweet['user']['screen_name'],
         "ctext":text,
         "pdate":pdate,
         "ptime":ptime,
         "ptimestamp": ptimestamp,
         "date":date,
+        "created_at":tweet['created_at'],
         "hashtags":hashtags,
         "urls":urls,
         "keywords":keywords

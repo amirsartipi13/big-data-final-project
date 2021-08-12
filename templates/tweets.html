@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+
+        .styled-table {
+            border-collapse: collapse;
+            margin: 75px auto;
+            width: 95%;
+            line-height: 2rem;
+            font-size: 0.7em;
+            font-family: sans-serif;
+            min-width: 400px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+
+        td {
+            height: 80px;
+            width: 160px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .styled-table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .styled-table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+
+        .styled-table tbody tr:last-of-type {
+            border-bottom: 2px solid #009879;
+        }
+
+        .styled-table tbody tr.active-row {
+            font-weight: bold;
+            color: #009879;
+        }
+    </style>
+</head>
+
+<body>
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>index</th>
+                <th>text</th>
+                <th>user</th>
+                <th>pdate</th>
+                <th>ptime</th>
+                <th>hashtags</th>
+                <th>urls</th>
+                <th>keywords</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set index = 0 %}
+
+            {% for item in data %}
+            <tr class="active-row">
+                <td>{{ loop.index }}</td>
+                <!-- <td>{{item.id}}</td> -->
+                <td>{{item.text}}</td>
+                <td>{{item.user}}</td>
+                <td>{{item.ptime}}</td>
+                <td>{{item.pdate}}</td>
+                <td>{{item.hashtags}}</td>
+                <td>{{item.urls}}</td>
+                <td>{{item.keywords}}</td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+    </table>
+
+</body>
+
+</html>

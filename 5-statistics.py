@@ -1,19 +1,20 @@
 from elasticsearch import Elasticsearch, helpers
 from kafka import KafkaConsumer, KafkaProducer
 from json import loads, dumps
-import redis, json
+import redis, json, datetime
 
 r = redis.Redis(host='localhost', port=6379)
 
 def store_tweet_by_keyword(tweet):
     keywords = tweet["keywords"]
-    t_id = tweet["id"]
+    tweet_id = tweet["id"]
     for keyword in keywords:
-        r.set(f"keyword:{keyword}:{t_id}", dumps(tweet), ex=60 * 60 * 6)
+        r.set(f"keyword:{keyword}:{tweet_id}", dumps(tweet), ex=60 * 60 * 6)
 
 def store_tweet_by_time(tweet):
-    time_key = datetime.strftime(datetime.strptime(
-        tweet["created_at"], '%a %b %d %H:%M:%S +0000 %Y'), '%Y:%m:%d:%H')
+    strptime = datetime.datetime.strptime(tweet["created_at"], '%a %b %d %H:%M:%S +0000 %Y')
+    time_key = datetime.datetime.strftime(strptime, '%Y:%m:%d:%H')
+    print(time_key)
     r.lpush(f"tweets:{time_key}", dumps(tweet))
 
 def store_last_hour_hashtags(tweet):
@@ -37,8 +38,7 @@ if __name__ == '__main__':
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     consumer = KafkaConsumer('statistics')
 
-    redis = get_redis_connection()
-    while consumer:
+    while True:
         consumer = KafkaConsumer('statistics')
         for msg in consumer:
             tweet = json.loads(msg.value)
@@ -48,4 +48,4 @@ if __name__ == '__main__':
             store_last_hashtags(tweet)
             store_last_tweets(tweet)
             print("stored tweet with id " + str(tweet["id"]))
-            producer.send('exit', value=data)
+            # producer.send('exit', value=data)

@@ -59,10 +59,11 @@ if __name__ == '__main__':
 
     es = create_or_get_es('data_center')
 
-    while consumer:
+    while True:
       consumer = KafkaConsumer('persistence',
                               auto_offset_reset= 'earliest',
                               auto_commit_interval_ms = 1000)
+      sleep(3)
       for msg in consumer:
           tweet = json.loads(msg.value)
           es.index('data_center', tweet)
