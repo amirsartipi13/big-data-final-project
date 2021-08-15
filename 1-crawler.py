@@ -49,7 +49,7 @@ def twitter_crawller(count):
 if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers=['localhost:9092'],
                             value_serializer=lambda x: dumps(x).encode('utf-8'))
-    for i in range(2):
+    for i in range(20):
         data = twitter_crawller(count=10)
         for text in data:
             sleep(3)

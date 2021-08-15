@@ -58,7 +58,7 @@ if __name__ == '__main__':
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
 
     es = create_or_get_es('data_center')
-
+    print("Elastic Connected")
     while True:
       consumer = KafkaConsumer('persistence',
                               auto_offset_reset= 'earliest',

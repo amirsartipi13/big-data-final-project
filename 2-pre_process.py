@@ -90,7 +90,7 @@ if __name__ == '__main__':
     producer = KafkaProducer(bootstrap_servers='localhost:9092',
                             value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     consumer = KafkaConsumer('pre-process')
-    while consumer:
+    while True:
         sleep(3)
         consumer = KafkaConsumer('pre-process')
         for msg in consumer:
