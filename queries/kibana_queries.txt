@@ -1,0 +1,56 @@
+# query1
+#tweets with specific hashtag
+
+GET  /data_center/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "hashtags.keyword": {
+              "value": "کرونا"
+            }
+          }
+        },
+	{
+          "range": {
+            "pdate": {
+               "gte": "12",
+               "lte": "15"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+#query2
+# count of tweets with specific hashtag
+
+GET  /data_center/_count
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "hashtags.keyword": {
+              "value": "کرونا"
+            }
+          }
+        },
+	{
+          "range": {
+            "pdate": {
+               "gte": "12",
+               "lte": "15"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
